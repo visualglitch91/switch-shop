@@ -6,14 +6,18 @@ import useModal from "./useModal";
 function Prompt({
   title,
   fields,
+  initialValues = [],
   onConfirm,
   ...props
 }: {
   title: string;
   fields: string[];
+  initialValues?: string[];
   onConfirm: (values: string[]) => void;
 } & DialogBaseControlProps) {
-  const [values, setValues] = useState(() => fields.map(() => ""));
+  const [values, setValues] = useState(() =>
+    fields.map((_, index) => initialValues[index] || "")
+  );
 
   return (
     <DialogBase
@@ -57,10 +61,12 @@ export function usePrompt() {
   function prompt({
     title,
     fields,
+    initialValues,
     onConfirm,
   }: {
     title: string;
     fields: string[];
+    initialValues: string[];
     onConfirm: (values: string[]) => void;
   }) {
     mount((_, props) => (
@@ -68,6 +74,7 @@ export function usePrompt() {
         {...props}
         title={title}
         fields={fields}
+        initialValues={initialValues}
         onConfirm={(values) => {
           props.onClose();
           onConfirm(values);
