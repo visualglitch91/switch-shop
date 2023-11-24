@@ -15,10 +15,15 @@ export default function SwitchInstallDialog({
   const prompt = usePrompt();
 
   useMountEffect(() => {
+    const lastUsedIp = window.localStorage.getItem("last-used-ip") || "";
+
     prompt({
       title: "Switch IP",
       fields: ["IP"],
+      initialValues: [lastUsedIp],
       onConfirm: ([ip]) => {
+        window.localStorage.setItem("last-used-ip", ip);
+
         api<{ processId: string }>("/roms/install", "post", {
           ip,
           paths,
