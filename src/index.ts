@@ -1,33 +1,16 @@
 import path from "path";
-import axios from "axios";
 import express from "express";
 import cors from "cors";
-import { keyBy, orderBy } from "lodash";
+import { orderBy } from "lodash";
 import { config } from "../config";
 import { getTitleId, pinoHttp } from "./utils";
 import { listFilesByExtensions } from "./utils";
+import titleDB from "./titleDB";
+
+await titleDB.setup();
 
 const host = "0.0.0.0";
 const port = config.port;
-
-let titleDB: Record<string, { id: string; name: string }>;
-
-function updateTitleDB() {
-  return axios
-    .get<{ id: string; name: string }[]>(
-      "https://raw.githubusercontent.com/blawar/titledb/master/US.en.json"
-    )
-    .then(({ data }) => {
-      titleDB = keyBy(
-        Object.values(data).filter(({ id }) => id && id.endsWith("000")),
-        ({ id }) => id.slice(0, -4)
-      );
-    });
-}
-
-await updateTitleDB();
-
-setInterval(updateTitleDB, 60 * 60_000);
 
 const app = express();
 app.use(cors());
@@ -57,30 +40,21 @@ async function getGames(gameId?: string) {
   return files.reduce(
     (acc, { path: filePath, size }) => {
       const fileName = path.basename(filePath);
-      const id = getTitleId(fileName);
+      const game = titleDB.find(getTitleId(fileName) || "others");
 
-      if (!id || (gameId && id !== gameId)) {
+      if (gameId && game.id !== gameId) {
         return acc;
       }
 
-      const gameEntry = titleDB[id];
-
-      if (!gameEntry) {
-        console.log(`No game found for ${id} (${filePath})`);
-        return acc;
-      }
-
-      const gameTitle = gameEntry.name.replace(/[^a-zA-Z0-9 ]/g, "");
-
-      if (!acc[id]) {
-        acc[id] = {
-          id: id,
-          title: gameTitle,
+      if (!acc[game.id]) {
+        acc[game.id] = {
+          id: game.id,
+          title: game.name.replace(/[^a-zA-Z0-9 ]/g, ""),
           files: [],
         };
       }
 
-      acc[id].files.push({
+      acc[game.id].files.push({
         name: fileName,
         path: filePath,
         size,
@@ -101,7 +75,7 @@ async function getGames(gameId?: string) {
 
 app.get("/:gameId?", async (req, res) => {
   const selectedGameId = req.params.gameId;
-  const selectedGame = selectedGameId && titleDB[selectedGameId];
+  const selectedGame = selectedGameId && titleDB.find(selectedGameId);
 
   if (selectedGameId && !selectedGame) {
     res.sendStatus(404);
