@@ -13,11 +13,24 @@ export function getTitleId(name: string) {
   }
 }
 
+export function formatDate(date: Date) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  return formatter.format(date);
+}
+
 export async function listFilesByExtensions(
   directoryPaths: string[],
   fileExtensions: string[]
 ) {
-  let files: { path: string; size: number }[] = [];
+  let files: { path: string; size: number; lastModified: Date }[] = [];
 
   async function processDirectory(directoryPath: string) {
     const directoryContents = await fs.promises.readdir(directoryPath);
@@ -32,7 +45,11 @@ export async function listFilesByExtensions(
         const fileExtension = path.extname(item).toLowerCase().substring(1);
 
         if (fileExtensions.includes(fileExtension)) {
-          files.push({ path: itemPath, size: stats.size });
+          files.push({
+            path: itemPath,
+            size: stats.size,
+            lastModified: stats.mtime,
+          });
         }
       }
     }

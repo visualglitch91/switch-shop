@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import { orderBy } from "lodash";
 import { config } from "../config";
-import { getTitleId, pinoHttp } from "./utils";
+import { formatDate, getTitleId, pinoHttp } from "./utils";
 import { listFilesByExtensions } from "./utils";
 import titleDB from "./titleDB";
 
@@ -21,7 +21,7 @@ function renderFiles(files: any[]) {
     .map((file) => {
       return `<a href="${encodeURI(file.name)}">${
         file.name
-      }</a>      17-Nov-2023 15:43          ${file.size}`;
+      }</a>      ${formatDate(file.lastModified)}          ${file.size}`;
     })
     .join("\n");
 }
@@ -34,27 +34,28 @@ function renderGames(games: any[]) {
     .join("\n");
 }
 
-async function getGames(gameId?: string) {
+async function getGames(filterId?: string) {
   const files = await listFilesByExtensions(config.dirs, ["nsp", "nsz", "xci"]);
 
   return files.reduce(
     (acc, { path: filePath, size }) => {
       const fileName = path.basename(filePath);
       const game = titleDB.find(getTitleId(fileName) || "others");
+      const gameId = game.id !== "others" ? game.id.slice(0, -4) : game.id;
 
-      if (gameId && game.id !== gameId) {
+      if (filterId && gameId !== filterId) {
         return acc;
       }
 
-      if (!acc[game.id]) {
-        acc[game.id] = {
-          id: game.id,
+      if (!acc[gameId]) {
+        acc[gameId] = {
+          id: gameId,
           title: game.name.replace(/[^a-zA-Z0-9 ]/g, ""),
           files: [],
         };
       }
 
-      acc[game.id].files.push({
+      acc[gameId].files.push({
         name: fileName,
         path: filePath,
         size,
@@ -73,7 +74,12 @@ async function getGames(gameId?: string) {
   );
 }
 
+app.get("/favicon.ico", (_, res) => {
+  return res.sendStatus(404);
+});
+
 app.get("/:gameId?", async (req, res) => {
+  console.log(req.url);
   const selectedGameId = req.params.gameId;
   const selectedGame = selectedGameId && titleDB.find(selectedGameId);
 
@@ -89,25 +95,29 @@ app.get("/:gameId?", async (req, res) => {
     files: orderBy(it.files, "name"),
   }));
 
+  if (ordered.length === 0) {
+    return res.sendStatus(404);
+  }
+
   const html = `
-    <html>
-      <head>
-        <title>${selectedGame ? selectedGame.name : "Roms"}</title>
-      </head>
-      <body>
-        <h1>${selectedGame ? selectedGame.name : "Roms"}</h1>
-        <hr />
-        <pre>
+      <html>
+        <head>
+          <title>${selectedGame ? selectedGame.name : "Roms"}</title>
+        </head>
+        <body>
+          <h1>${selectedGame ? selectedGame.name : "Roms"}</h1>
+          <hr />
+          <pre>
 ${
   selectedGame
     ? `<a href="../">../</a>\n${renderFiles(ordered[0].files)}`
     : renderGames(ordered)
 }
-        </pre>
-        <hr />
-      </body>
-    </html>
-  `;
+          </pre>
+          <hr />
+        </body>
+      </html>
+    `;
 
   res.setHeader("content-type", "text/html");
   res.send(html);
