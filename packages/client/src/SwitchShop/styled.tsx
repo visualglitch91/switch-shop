@@ -1,4 +1,4 @@
-import { InputBase, alpha, styled } from "@mui/material";
+import { Button, InputBase, alpha, styled } from "@mui/material";
 
 export const Offset = styled("div")(({ theme }) => theme.mixins.toolbar);
 
@@ -9,8 +9,9 @@ export const Search = styled("div")(({ theme }) => ({
   "&:hover": {
     backgroundColor: alpha(theme.palette.common.white, 0.25),
   },
+  flex: 1,
   marginLeft: 0,
-  width: "100%",
+  marginRight: "auto",
   [theme.breakpoints.up("sm")]: {
     marginLeft: theme.spacing(1),
     width: "auto",
@@ -43,3 +44,13 @@ export const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
   },
 }));
+
+export const AppBarButton = styled(Button)(({ theme }) => ({
+  fontSize: 12,
+  whiteSpace: "nowrap",
+}));
+
+AppBarButton.defaultProps = {
+  ...AppBarButton.defaultProps,
+  color: "inherit",
+};

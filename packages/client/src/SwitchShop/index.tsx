@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { Search as SearchIcon } from "@mui/icons-material";
-import { AppBar, Button, Toolbar } from "@mui/material";
+import { AppBar, Fab, Toolbar } from "@mui/material";
 import useModal from "../utils/useModal";
 import RomList from "../RomList";
 import SwitchInstallDialog from "../SwitchInstallDialog";
-import { Offset, Search, SearchIconWrapper, StyledInputBase } from "./styled";
+import {
+  AppBarButton,
+  Offset,
+  Search,
+  SearchIconWrapper,
+  StyledInputBase,
+} from "./styled";
 
 export default function App() {
   const mount = useModal();
@@ -37,29 +43,29 @@ export default function App() {
             />
           </Search>
 
-          {selected.length > 0 && (
-            <>
-              <Button
-                color="inherit"
-                onClick={() => {
-                  setSearch("");
-                  setSelectedOnly(!selectedOnly);
-                }}
-              >
-                {selectedOnly ? "View All" : `View Selected (${totalSelected})`}
-              </Button>
-              <Button
-                color="inherit"
-                onClick={() => {
-                  mount((_, props) => (
-                    <SwitchInstallDialog {...props} paths={selected} />
-                  ));
-                }}
-              >
-                Send files
-              </Button>
-            </>
-          )}
+          <AppBarButton
+            disabled={totalSelected === 0}
+            onClick={() => {
+              setSearch("");
+              setSelectedOnly(!selectedOnly);
+            }}
+          >
+            {selectedOnly ? "View All" : `View Selected (${totalSelected})`}
+          </AppBarButton>
+
+          <AppBarButton
+            disabled={totalSelected === 0}
+            sx={(theme) => ({
+              [theme.breakpoints.down("md")]: { display: "none" },
+            })}
+            onClick={() => {
+              mount((_, props) => (
+                <SwitchInstallDialog {...props} paths={selected} />
+              ));
+            }}
+          >
+            Send to Switch
+          </AppBarButton>
         </Toolbar>
       </AppBar>
       <Offset />
@@ -80,6 +86,26 @@ export default function App() {
           setSelected(newChecked);
         }}
       />
+      {totalSelected > 0 && (
+        <Fab
+          color="primary"
+          sx={(theme) => ({
+            position: "fixed",
+            bottom: 16,
+            right: 16,
+            display: "none",
+            [theme.breakpoints.down("md")]: { display: "block" },
+          })}
+          variant="extended"
+          onClick={() => {
+            mount((_, props) => (
+              <SwitchInstallDialog {...props} paths={selected} />
+            ));
+          }}
+        >
+          Send to Switch
+        </Fab>
+      )}
     </>
   );
 }
