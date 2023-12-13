@@ -29,7 +29,7 @@ function renderFiles(files: any[]) {
 function renderGames(games: any[]) {
   return games
     .map((game) => {
-      return `<a href="${game.id}/">${game.title}/</a>`;
+      return `<a data-icon="${game.image}" href="${game.id}/">${game.title}/</a>`;
     })
     .join("\n");
 }
@@ -51,6 +51,7 @@ async function getGames(filterId?: string) {
         acc[gameId] = {
           id: gameId,
           title: game.name.replace(/[^a-zA-Z0-9 ]/g, ""),
+          image: game.iconUrl,
           files: [],
         };
       }
@@ -68,6 +69,7 @@ async function getGames(filterId?: string) {
       {
         id: string;
         title: string;
+        image?: string;
         files: { name: string; path: string; size: number }[];
       }
     >
@@ -79,7 +81,6 @@ app.get("/favicon.ico", (_, res) => {
 });
 
 app.get("/:gameId?", async (req, res) => {
-  console.log(req.url);
   const selectedGameId = req.params.gameId;
   const selectedGame = selectedGameId && titleDB.find(selectedGameId);
 

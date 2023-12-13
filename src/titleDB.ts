@@ -21,7 +21,7 @@ async function update() {
   setTimeout(update, 60 * 60_000);
 }
 
-function find(titleId: string) {
+function find(titleId: string): { id: string; name: string; iconUrl?: string } {
   return database[titleId] || { id: "others", name: "Others" };
 }
 
