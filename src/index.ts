@@ -29,7 +29,7 @@ function renderFiles(files: any[]) {
 function renderGames(games: any[]) {
   return games
     .map((game) => {
-      return `<a data-icon="${game.image}" href="${game.id}/">${game.title}/</a>`;
+      return `<a href="${game.id}/">${game.title}/</a>`;
     })
     .join("\n");
 }
@@ -78,6 +78,21 @@ async function getGames(filterId?: string) {
 
 app.get("/favicon.ico", (_, res) => {
   return res.sendStatus(404);
+});
+
+app.get("/json", async (_, res) => {
+  const games = await getGames();
+
+  const ordered = orderBy(Object.values(games), "title").map((it) => ({
+    ...it,
+    files: orderBy(it.files, "name"),
+  }));
+
+  if (ordered.length === 0) {
+    return res.sendStatus(404);
+  }
+
+  return res.send(ordered);
 });
 
 app.get("/:gameId?", async (req, res) => {
