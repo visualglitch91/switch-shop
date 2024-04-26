@@ -14,9 +14,7 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "types": ["vite/client", "node"]
+    "noEmit": true
   },
   "include": ["src"]
 }

@@ -1,17 +1,16 @@
-import axios from "axios";
-import { keyBy } from "lodash";
+import ky from "ky";
+import { keyBy } from "lodash-es";
 
 let database: Record<string, { id: string; name: string }>;
 
 async function update() {
   console.log("Updating title database...");
 
-  await axios
-    .get<{ id: string; name: string }[]>(
-      "https://raw.githubusercontent.com/blawar/titledb/master/US.en.json"
-    )
+  await ky
+    .get("https://raw.githubusercontent.com/blawar/titledb/master/US.en.json")
+    .json<{ id: string; name: string }[]>()
     .then(
-      ({ data }) => {
+      (data) => {
         database = keyBy(
           Object.values(data).filter(({ id }) => id && id.endsWith("000")),
           ({ id }) => id.slice(0, -4)

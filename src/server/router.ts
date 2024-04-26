@@ -1,20 +1,12 @@
 import path from "path";
-import express from "express";
-import cors from "cors";
-import { orderBy } from "lodash";
-import { config } from "../config";
-import { formatDate, getTitleId, pinoHttp } from "./utils";
+import { Router } from "express";
+import { orderBy } from "lodash-es";
+import { config } from "../../config";
+import { formatDate, getTitleId } from "./utils";
 import { listFilesByExtensions } from "./utils";
 import titleDB from "./titleDB";
 
-await titleDB.setup();
-
-const host = "0.0.0.0";
-const port = config.port;
-
-const app = express();
-app.use(cors());
-app.use(pinoHttp);
+const router = Router();
 
 function renderFiles(files: any[]) {
   return files
@@ -29,7 +21,7 @@ function renderFiles(files: any[]) {
 function renderGames(games: any[]) {
   return games
     .map((game) => {
-      return `<a href="${game.id}/">${game.title}/</a>`;
+      return `<a href="/api/${game.id}/">${game.title}/</a>`;
     })
     .join("\n");
 }
@@ -76,11 +68,7 @@ async function getGames(filterId?: string) {
   );
 }
 
-app.get("/favicon.ico", (_, res) => {
-  return res.sendStatus(404);
-});
-
-app.get("/json", async (_, res) => {
+router.get("/json", async (_, res) => {
   const games = await getGames();
 
   const ordered = orderBy(Object.values(games), "title").map((it) => ({
@@ -95,7 +83,7 @@ app.get("/json", async (_, res) => {
   return res.send(ordered);
 });
 
-app.get("/:gameId?", async (req, res) => {
+router.get("/:gameId?", async (req, res) => {
   const selectedGameId = req.params.gameId;
   const selectedGame = selectedGameId && titleDB.find(selectedGameId);
 
@@ -139,7 +127,7 @@ ${
   res.send(html);
 });
 
-app.all("/:gameId/:fileName", async (req, res) => {
+router.all("/:gameId/:fileName", async (req, res) => {
   if (!["GET", "HEAD"].includes(req.method)) {
     return res.sendStatus(404);
   }
@@ -159,6 +147,4 @@ app.all("/:gameId/:fileName", async (req, res) => {
   return res.sendFile(file.path);
 });
 
-app.listen(port, host, () => {
-  console.log(`Listening at http://${host}:${port}`);
-});
+export default router;
