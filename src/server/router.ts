@@ -21,7 +21,7 @@ function renderFiles(files: any[]) {
 function renderGames(games: any[]) {
   return games
     .map((game) => {
-      return `<a href="/api/${game.id}/">${game.title}/</a>`;
+      return `<a href="${game.id}/">${game.title}/</a>`;
     })
     .join("\n");
 }
